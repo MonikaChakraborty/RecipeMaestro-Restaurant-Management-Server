@@ -105,11 +105,22 @@ async function run() {
     const allFoodItemsCollection = client.db("restaurantManagement").collection("allFoodItems");
 
 
-
     const orderCollection = client.db('restaurantManagement').collection("orders");
+
 
     const userCollection = client.db('restaurantManagement').collection("users");
 
+
+
+    // top food section
+    app.get('/topFood', async (req, res) => {
+      const show = 6;
+      const cursor = allFoodItemsCollection.find().sort({ count: "desc" }).limit(show);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    
 
     // show all food items with search
     app.get("/allFoodItems", async (req, res) => {
@@ -170,7 +181,7 @@ async function run() {
      app.post('/users', async(req, res) => {
       const user = req.body;
       console.log(user);
-      const result = await orderCollection.insertOne(user);
+      const result = await userCollection.insertOne(user);
       res.send(result);
     })
 
