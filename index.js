@@ -192,6 +192,13 @@ async function run() {
     });
 
 
+    app.get('/addedFoodItems/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await allFoodItemsCollection.findOne(query);
+      res.send(result)
+    })
+
 
 
     // orders
@@ -225,15 +232,15 @@ async function run() {
       res.send(result);
     });
 
+
+
     // orders to orderCollection
     app.post("/orders", async (req, res) => {
       const order = req.body;
       // console.log(order);
-
-      // Update the count and quantity in the allFoodItems collection
       const filter = { foodName: order.foodName };
       const update = {
-        $inc: { count: 1, quantity: -order.quantity }, // Increment the count by 1 and decrement the quantity by the ordered quantity
+        $inc: { count: 1, quantity: -order.quantity },
       };
 
       await allFoodItemsCollection.updateOne(filter, update);
@@ -241,6 +248,19 @@ async function run() {
       const result = await orderCollection.insertOne(order);
       res.send(result);
     });
+
+
+
+    // delete order
+    app.delete('/orders/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await orderCollection.deleteOne(query);
+      res.send(result)
+    })
+
+
+
 
     await client.db("admin").command({ ping: 1 });
     console.log(
