@@ -192,7 +192,8 @@ async function run() {
     });
 
 
-    app.get('/addedFoodItems/:id', async(req, res) => {
+
+    app.get('/addedFoodItems/updateAddedFoodItems/:id', async(req, res) => {
       const id = req.params.id;
       const query = {_id: new ObjectId(id)}
       const result = await allFoodItemsCollection.findOne(query);
@@ -248,6 +249,30 @@ async function run() {
       const result = await orderCollection.insertOne(order);
       res.send(result);
     });
+
+
+    // update added items
+    app.put('/addedFoodItems/updateAddedFoodItems/:id', async(req, res) => {
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const options = {upsert: true};
+      const updatedFoodItem = req.body;
+
+      const foodItem = {
+        $set: {
+          foodImage: updatedFoodItem.foodImage,
+          foodName: updatedFoodItem.foodName,
+          foodOrigin: updatedFoodItem.foodOrigin,
+          foodCategory: updatedFoodItem.foodCategory,
+          price: updatedFoodItem.price,
+          description: updatedFoodItem.description,
+          quantity: updatedFoodItem.quantity
+        }
+      }
+
+      const result = await allFoodItemsCollection.updateOne(filter, foodItem, options)
+      res.send(result);
+    })
 
 
 
