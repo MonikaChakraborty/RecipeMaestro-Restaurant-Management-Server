@@ -12,7 +12,6 @@
 
 // const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.63dg6sa.mongodb.net/?retryWrites=true&w=majority`;
 
-
 // const client = new MongoClient(uri, {
 //   serverApi: {
 //     version: ServerApiVersion.v1,
@@ -30,7 +29,6 @@
 //       .db("restaurantManagement")
 //       .collection("allFoodItems");
 
-
 //     // show all food items
 //     app.get("/allFoodItems", async (req, res) => {
 //       const page = parseInt(req.query.page);
@@ -43,17 +41,11 @@
 //       res.send(result);
 //     });
 
-    
-
-
-
 //     // pagination
 //     app.get("/allFoodItemsCount", async (req, res) => {
 //       const count = await allFoodItemsCollection.estimatedDocumentCount();
 //       res.send({ count });
 //     });
-
-    
 
 //     // Send a ping to confirm a successful connection
 //     await client.db("admin").command({ ping: 1 });
@@ -74,7 +66,6 @@
 // app.listen(port, () => {
 //   console.log(`Restaurant Management Server is running on port ${port}`);
 // });
-
 
 const express = require("express");
 const cors = require("cors");
@@ -102,25 +93,35 @@ async function run() {
     // Connect the client to the server (optional starting in v4.7)
     await client.connect();
 
-    const allFoodItemsCollection = client.db("restaurantManagement").collection("allFoodItems");
+    const allFoodItemsCollection = client
+      .db("restaurantManagement")
+      .collection("allFoodItems");
 
+    const orderCollection = client
+      .db("restaurantManagement")
+      .collection("orders");
 
-    const orderCollection = client.db('restaurantManagement').collection("orders");
+    const userCollection = client
+      .db("restaurantManagement")
+      .collection("users");
 
-
-    const userCollection = client.db('restaurantManagement').collection("users");
-
-
-
-    // top food section
-    app.get('/topFood', async (req, res) => {
-      const show = 6;
-      const cursor = allFoodItemsCollection.find().sort({ count: "desc" }).limit(show);
+    // get users
+    app.get("/users", async (req, res) => {
+      const cursor = userCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
 
-    
+    // top food section
+    app.get("/topFood", async (req, res) => {
+      const show = 6;
+      const cursor = allFoodItemsCollection
+        .find()
+        .sort({ count: "desc" })
+        .limit(show);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
 
     // show all food items with search
     app.get("/allFoodItems", async (req, res) => {
@@ -133,15 +134,14 @@ async function run() {
         query = { foodName: { $regex: new RegExp(searchTerm, "i") } };
       }
 
-      const cursor = allFoodItemsCollection.find(query)
+      const cursor = allFoodItemsCollection
+        .find(query)
         .skip(page * size)
         .limit(size);
 
       const result = await cursor.toArray();
       res.send(result);
     });
-
-
 
     // pagination
     app.get("/allFoodItemsCount", async (req, res) => {
@@ -151,63 +151,101 @@ async function run() {
 
 
 
+
     // show single food item
-    app.get('/details/:id', async(req, res) => {
+    app.get("/details/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) };
 
       // const options = {
       //   projection: { foodName: 1, foodImage: 1,foodCategory: 1, }
       // };
 
       // const result =await allFoodItemsCollection.findOne(query, options);
-      const result =await allFoodItemsCollection.findOne(query);
-      res.send(result)
-    })
-
-
+      const result = await allFoodItemsCollection.findOne(query);
+      res.send(result);
+    });
 
     // food purchase/order page
-    app.get('/foodPurchase/:id', async(req, res) => {
+    app.get("/foodPurchase/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-      const result =await allFoodItemsCollection.findOne(query);
-      res.send(result)
-    })
-
-
-
-     // users
-     app.post('/users', async(req, res) => {
-      const user = req.body;
-      console.log(user);
-      const result = await userCollection.insertOne(user);
+      const query = { _id: new ObjectId(id) };
+      const result = await allFoodItemsCollection.findOne(query);
       res.send(result);
-    })
+    });
+
+
+
+
+    // added items
+    app.get("/addedFoodItems", async (req, res) => {
+      console.log(req.query.madeBy);
+
+      let query = {};
+      if (req.query?.madeBy) {
+        query = { madeBy: req.query.madeBy };
+      }
+
+      const result = await allFoodItemsCollection.find(query).toArray();
+
+      res.send(result);
+    });
+
 
 
 
     // orders
-    app.post('/orders', async(req, res) => {
+    app.get("/orders", async (req, res) => {
+      // console.log(req.query.email);
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+
+      const result = await orderCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
+
+
+    // users
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      // console.log(user);
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // add food items to allFoodItems Collection
+    app.post("/addFoodItems", async (req, res) => {
+      const foodItem = req.body;
+      // console.log(foodItem);
+      const result = await allFoodItemsCollection.insertOne(foodItem);
+      res.send(result);
+    });
+
+    // orders to orderCollection
+    app.post("/orders", async (req, res) => {
       const order = req.body;
-      console.log(order);
+      // console.log(order);
 
-     // Update the count and quantity in the allFoodItems collection
-  const filter = { foodName: order.foodName };
-  const update = {
-    $inc: { count: 1, quantity: -order.quantity }, // Increment the count by 1 and decrement the quantity by the ordered quantity
-  };
+      // Update the count and quantity in the allFoodItems collection
+      const filter = { foodName: order.foodName };
+      const update = {
+        $inc: { count: 1, quantity: -order.quantity }, // Increment the count by 1 and decrement the quantity by the ordered quantity
+      };
 
-  await allFoodItemsCollection.updateOne(filter, update);
-      
+      await allFoodItemsCollection.updateOne(filter, update);
+
       const result = await orderCollection.insertOne(order);
       res.send(result);
-    })
-
-
+    });
 
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -223,4 +261,3 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Restaurant Management Server is running on port ${port}`);
 });
-
