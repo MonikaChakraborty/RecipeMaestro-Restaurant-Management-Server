@@ -6,8 +6,8 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors());
-app.use(express.json());
+// app.use(cors());
+// app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.63dg6sa.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -36,12 +36,14 @@ async function run() {
       .db("restaurantManagement")
       .collection("users");
 
+
     // get users
     app.get("/users", async (req, res) => {
       const cursor = userCollection.find();
       const result = await cursor.toArray();
       res.send(result);
     });
+
 
     // top food section
     app.get("/topFood", async (req, res) => {
@@ -53,6 +55,8 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+
+    
 
     // show all food items with search
     app.get("/allFoodItems", async (req, res) => {
@@ -218,10 +222,10 @@ async function run() {
 
 
 
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
