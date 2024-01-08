@@ -212,12 +212,37 @@ async function run() {
 
 
     // delete order
-    app.delete('/orders/:id', async(req, res) => {
+    // app.delete('/orders/:id', async(req, res) => {
+    //   const id = req.params.id;
+    //   const query = {_id: new ObjectId(id)}
+    //   const result = await orderCollection.deleteOne(query);
+    //   res.send(result)
+    // })
+
+    app.delete('/orders/:id', async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) };
+    
+      // Fetch the order details before deleting it
+      const deletedOrder = await orderCollection.findOne(query);
+    
+      // Delete the order
       const result = await orderCollection.deleteOne(query);
-      res.send(result)
-    })
+    
+      // If the order was successfully deleted, update the corresponding entry in allfooditems
+      if (result.deletedCount > 0 && deletedOrder) {
+        const filter = { foodName: deletedOrder.foodName };
+        const update = {
+          $inc: { count: -1, quantity: deletedOrder.quantity },
+        };
+    
+        // Update the allfooditems collection
+        await allFoodItemsCollection.updateOne(filter, update);
+      }
+    
+      res.send(result);
+    });
+    
 
 
 
